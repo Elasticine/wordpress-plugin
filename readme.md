@@ -3,20 +3,20 @@
 This repository holds code for the Elasticine wordpress plugin and examples of usage. The Elasticine wordpress plugin can be used to integrate agency websites with our public API for automatic updating of information from the management system. 
 
 This plugin:
-1. Automatically pulls artist information from the "Public Website" section of artist set-up on Elasticine, as long as they are set to display publically on that page. 
-2. Automatically pulls announced and contracted shows for each artist on the company's roster, as long as they are set to display publically. 
-3. Maintains a set of categories, one for each public artist, as sub-categories of "artist", so that news posts can be associated with individual artists. 
+* Automatically pulls artist information from the "Public Website" section of artist set-up on Elasticine, as long as they are set to display publically on that page. 
+* Automatically pulls announced and contracted shows for each artist on the company's roster, as long as they are set to display publically. 
+* Maintains a set of categories, one for each public artist, as sub-categories of "artist", so that news posts can be associated with individual artists. 
 
 Artist data is set by agents in the internal Elasticine platform artist setup pages. 
 
 Artists have the following website-specific information that may be set (but may also be empty):
-1. A tagline -- a brief description of the artist
-2. A URL slug
-3. A biography, including HTML markup
-4. Info, including HTML markup -- for example, listing territories the artist plays in and information regarding logistics
-5. A set of links, with link text, a URL, a type (= web, soundcloud, facebook, or youtube), and a "featured" flag. The intention is that featured links can be displayed more prominently, or include inline media players. 
-6. A set of press assets, which will typically be images. Includes flags for display as "image" or "link", and a "featured" flag for whether the press asset should be placed more prominently. 
-7. A set of label names that the artist has released on. 
+* A tagline -- a brief description of the artist
+* A URL slug
+* A biography, including HTML markup
+* Info, including HTML markup -- for example, listing territories the artist plays in and information regarding logistics
+* A set of links, with link text, a URL, a type (= web, soundcloud, facebook, or youtube), and a "featured" flag. The intention is that featured links can be displayed more prominently, or include inline media players. 
+* A set of press assets, which will typically be images. Includes flags for display as "image" or "link", and a "featured" flag for whether the press asset should be placed more prominently. 
+* A set of label names that the artist has released on. 
 
 ## Code Examples
 
