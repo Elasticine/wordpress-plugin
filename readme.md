@@ -43,7 +43,8 @@ Artists have the following website-specific information that may be set (but may
 $url = $_SERVER['REQUEST_URI'];
 
 //Assumes artist name slug is final part of URL
-$slug = $end = end((explode('/', rtrim($url, '/'))));
+$end = explode('/', rtrim($url, '/'));
+$slug = end($end);
 
 do_action('elasticine_artist',$slug);
 
