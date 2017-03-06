@@ -213,7 +213,7 @@ function elasticine_get_shows($startDate, $endDate)
 		$cachePeriod = 60 * 60 * 6;
 		$transient = "es_" . $startDate . "_" . $endDate;
 		$shows = get_transient($transient);
-		if ($shows !== false) { return; }
+		if ($shows === false) { return false; }
 
 		$url = elasticine_build_url() . '/shows/' . $startDate . "/" . $endDate;
 		
