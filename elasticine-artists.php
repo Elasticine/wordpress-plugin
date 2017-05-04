@@ -143,8 +143,8 @@ function elasticine_options() {
 /*****************************************************
 	Functions for getting data from elasticine API
 ******************************************************/
-//$cachePeriod = 60 * 60 * 6; //Update every 6 hours
-$cachePeriod = 60 * 60 * 6;
+$cachePeriod = 60 * 60 * 6;  //Update every 6 hours
+
 /**
  * Returns the base URL for the elasticine API
  */
@@ -285,7 +285,7 @@ function elasticine_get_shows_artist($artist, $startDate, $endDate)
 		if ($shows !== false) { return; }
 		
 		$url = elasticine_build_url() . '/artist_shows/' . $startDate . "/" . $endDate . "/" . $artist;
-		
+
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ($http_code == 200)
