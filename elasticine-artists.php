@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Elasticine 
  * Description: Pulls in data from the Elasticine platform.
- * Version: 0.0.2
+ * Version: 0.0.3
  * Author: Henry Franks
  *
  * 
@@ -43,6 +43,9 @@ function elasticine_install()
 		
 		//Where do we want to get the data from?
 		add_option('elasticine_artists_base_url', 'system.elasticine.net/api', '', 'yes');
+
+		//Do we want to filter by territory? 
+		add_option('elasticine_artists_territory', '', '', 'yes');
 }
 
 function elasticine_uninstall()
@@ -50,6 +53,7 @@ function elasticine_uninstall()
 		delete_option('elasticine_artists_company_name');
 		delete_option('elasticine_artists_maintain_categories');
 		delete_option('elasticine_artists_base_url');
+		delete_option('elasticine_artists_territory');
 }
 
 /*******************************************
@@ -62,6 +66,7 @@ function elasticine_artists_menu() {
 	register_setting('elasticine_settings', 'elasticine_artists_base_url');
 	register_setting('elasticine_settings', 'elasticine_artists_company_name');
 	register_setting('elasticine_settings', 'elasticine_artists_maintain_categories');
+	register_setting('elasticine_settings', 'elasticine_artists_territory');
 }
 
 function elasticine_options() {
@@ -84,6 +89,17 @@ function elasticine_options() {
 										<input name="elasticine_artists_company_name" type="text" id="elasticine_artists_company_name""
 														value="<?php echo get_option('elasticine_artists_company_name'); ?>" />
 												This should be the exact company name you have set in the Elasticine Agency Management System.
+								</td>
+				</tr>
+		</table>
+		<hr/>
+		<table width="100%">
+				<tr valign="top">
+						<th scope="row">Territory for website</th>
+								<td>
+										<input name="elasticine_artists_territory" type="text" id="elasticine_artists_territory""
+														value="<?php echo get_option('elasticine_artists_territory'); ?>" />
+												If applicable, enter the territory name this website is for. If you do not use territories, or want all territories displayed, leave blank. 
 								</td>
 				</tr>
 		</table>
@@ -127,7 +143,8 @@ function elasticine_options() {
 /*****************************************************
 	Functions for getting data from elasticine API
 ******************************************************/
-
+//$cachePeriod = 60 * 60 * 6; //Update every 6 hours
+$cachePeriod = 60 * 60 * 6;
 /**
  * Returns the base URL for the elasticine API
  */
@@ -136,15 +153,46 @@ function elasticine_build_url()
 	return 	"http://" . get_option('elasticine_artists_base_url') . "/json/" . sanitize_title(get_option('elasticine_artists_company_name'));
 }
 
+/**
+ * Given an array of entities (shows or artists), we filter them, if necessary, by territory name.
+ * By some magic coincidence, the JSON output from elasticine uses the same structure for territories for both shows and artists. 
+ */
+function elasticine_filter_territories($data)
+{
+	$territories = get_option('elasticine_artists_territory');
+	if (trim($territories) == "")
+	{
+		return $data; 
+	} else {
+		$dataToReturn = [];
+		foreach($data as $dataItem)
+		{
+			if (count($dataItem->territories) > 0)
+			{
+				foreach($dataItem->territories as $t)
+				{
+					if (strpos($t, $territories) !== false)
+					{
+						$dataToReturn[] = $dataItem; 
+					}
+				}
+			}
+		}
+		return $dataToReturn; 
+	}
+}
+
 function elasticine_update_artists()
 {
-		$cachePeriod = 60 * 60 * 6;  //Update every 6 hours
 		$url = elasticine_build_url() . "/artists/";
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
+
 		if ($http_code == 200)
 		{
 			$body = wp_remote_retrieve_body($response);
+
+			$body = json_encode(elasticine_filter_territories(json_decode($body)));
 			set_transient('elasticine_artists', $body, $cachePeriod);
 		} else {
 			die("HTTP Error " . $http_code);
@@ -180,7 +228,6 @@ function elasticine_get_artists()
  */
 function elasticine_get_artist($slug)
 {
-    $cachePeriod = 60 * 60 * 6;
     $transient = 'elasticine_artist_' . $slug;
 	
 	//If it's in the cache, don't worry
@@ -210,18 +257,18 @@ function elasticine_get_artist($slug)
  */
 function elasticine_get_shows($startDate, $endDate)
 {
-		$cachePeriod = 60 * 60 * 6;
 		$transient = "es_" . $startDate . "_" . $endDate;
 		$shows = get_transient($transient);
 		if ($shows === false) { return false; }
 
 		$url = elasticine_build_url() . '/shows/' . $startDate . "/" . $endDate;
-		
+				
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ($http_code == 200)
 		{
 			$body = wp_remote_retrieve_body($response);
+			$body = json_encode(elasticine_filter_territories(json_decode($body)));
 			set_transient($transient, $body, $cachePeriod);
 		} else {
 			die("HTTP Error " . $http_code);
@@ -233,17 +280,18 @@ function elasticine_get_shows($startDate, $endDate)
  */
 function elasticine_get_shows_artist($artist, $startDate, $endDate)
 {
-		$cachePeriod = 60 * 60 * 6;
 		$transient = 'es_' . $artist . "_" . $startDate . "_" . $endDate;
 		$shows = get_transient($transient);
 		if ($shows !== false) { return; }
 		
 		$url = elasticine_build_url() . '/artist_shows/' . $startDate . "/" . $endDate . "/" . $artist;
+		
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ($http_code == 200)
 		{
 			$body = wp_remote_retrieve_body($response);
+			$body = json_encode(elasticine_filter_territories(json_decode($body)));
 			set_transient($transient, $body, $cachePeriod);
 		} else {
 			die("HTTP Error " . $http_code);
