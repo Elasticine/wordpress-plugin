@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Elasticine 
  * Description: Pulls in data from the Elasticine platform.
- * Version: 0.0.3
+ * Version: 0.0.4
  * Author: Henry Franks
  *
  * 
@@ -143,8 +143,8 @@ function elasticine_options() {
 /*****************************************************
 	Functions for getting data from elasticine API
 ******************************************************/
-$cachePeriod = 60 * 60 * 6;  //Update every 6 hours
-
+//$cachePeriod = 60 * 60 * 6; //Update every 6 hours
+$cachePeriod = 1;
 /**
  * Returns the base URL for the elasticine API
  */
@@ -156,30 +156,75 @@ function elasticine_build_url()
 /**
  * Given an array of entities (shows or artists), we filter them, if necessary, by territory name.
  * By some magic coincidence, the JSON output from elasticine uses the same structure for territories for both shows and artists. 
+ *
+ * Also, we'll filter agents if necessary. 
  */
 function elasticine_filter_territories($data)
 {
 	$territories = get_option('elasticine_artists_territory');
+
 	if (trim($territories) == "")
 	{
 		return $data; 
 	} else {
 		$dataToReturn = [];
-		foreach($data as $dataItem)
+
+		//Filter at top level for artist single page
+		$data = elasticine_filter_agents($data, $territories);
+
+		if (is_array($data))
 		{
-			if (count($dataItem->territories) > 0)
+			foreach($data as $dataItem)
 			{
-				foreach($dataItem->territories as $t)
+				if (count($dataItem->territories) > 0)
 				{
-					if (strpos($t, $territories) !== false)
+					$dataItem = elasticine_filter_agents($dataItem, $territories);
+
+					foreach($dataItem->territories as $t)
 					{
-						$dataToReturn[] = $dataItem; 
+						if (strpos($t, $territories) !== false)
+						{
+							$dataToReturn[] = $dataItem; 
+						}
 					}
 				}
 			}
+		} else {
+			$dataToReturn = $data;
 		}
 		return $dataToReturn; 
 	}
+}
+
+function elasticine_filter_agents($item, $territories)
+{
+	if (isset($item->agents) && count($item->agents) > 0)
+	{
+		$filteredAgents = [];
+		foreach($item->agents as $agent)
+		{
+			if (count($agent->territories) > 0)
+			{
+				$includeAgent = false;
+				foreach($agent->territories as $t)
+				{				
+					if (strpos($t, $territories) !== false)
+					{
+						$includeAgent = true;
+					}
+				}
+			}
+			if ($includeAgent)
+			{
+				$filteredAgents[] = $agent; 
+			}
+		}
+		if (count($filteredAgents) > 0)
+		{
+			$item->agents = $filteredAgents;
+		}
+	}
+	return $item;
 }
 
 function elasticine_update_artists()
@@ -241,8 +286,8 @@ function elasticine_get_artist($slug)
 	if ($http_code == 200)
 	{
 		$body = wp_remote_retrieve_body($response);
-		$artist = $body;
-		set_transient($transient, $body, $cachePeriod);
+		$artist = json_encode(elasticine_filter_territories(json_decode($body)));
+		set_transient($transient, $artist, $cachePeriod);
 	} else {
 		die("HTTP Error");
 	}
@@ -262,7 +307,9 @@ function elasticine_get_shows($startDate, $endDate)
 		if ($shows === false) { return false; }
 
 		$url = elasticine_build_url() . '/shows/' . $startDate . "/" . $endDate;
-				
+		
+		file_put_contents('php://stderr', print_r($url, true));
+		
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ($http_code == 200)
@@ -285,7 +332,7 @@ function elasticine_get_shows_artist($artist, $startDate, $endDate)
 		if ($shows !== false) { return; }
 		
 		$url = elasticine_build_url() . '/artist_shows/' . $startDate . "/" . $endDate . "/" . $artist;
-
+		file_put_contents('php://stderr', print_r($url, true));
 		$response = wp_remote_get($url);
 		$http_code = wp_remote_retrieve_response_code( $response );
 		if ($http_code == 200)
@@ -422,5 +469,7 @@ function elasticine_insert_query_vars( $vars ) {
 }
 
 
-
-
+function elastilog($str)
+{
+	file_put_contents('php://stderr', print_r($str, TRUE) . "\n");
+}
