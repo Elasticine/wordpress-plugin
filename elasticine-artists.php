@@ -63,6 +63,7 @@ add_action( 'admin_menu', 'elasticine_artists_menu' );
 
 function elasticine_artists_menu() {
 	add_options_page( 'Elasticine options', 'Elasticine', 'manage_options', 'elasticine-options', 'elasticine_options' );
+	add_options_page( 'Elasticine admin', 'Elasticine admin', 'manage_options', 'elasticine-admin', 'elasticine_admin' );
 	register_setting('elasticine_settings', 'elasticine_artists_base_url');
 	register_setting('elasticine_settings', 'elasticine_artists_company_name');
 	register_setting('elasticine_settings', 'elasticine_artists_maintain_categories');
@@ -132,9 +133,38 @@ function elasticine_options() {
 		<input type="hidden" name="action" value="update" />
 		
 		<p>
-		<input type="submit" value="<?php _e('Save Changes') ?>" />
+			<input type="submit" value="<?php _e('Save Changes') ?>" />
 		</p>
 		
+		</form>
+		</div>
+<?php
+}
+
+function elasticine_admin() {
+	if ( !current_user_can( 'manage_options' ) )  {
+		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	}
+
+	if (isset($_POST['forceUpdate']) && check_admin_referer('elasticine-admin')) 
+	{
+		global $wpdb; 
+		$count = $wpdb->get_var( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_elasticine_%' OR option_name LIKE '_transient_es_%'" );
+		echo "<div>Force update complete</div><br/>";
+  	}
+?>
+	<div>
+		<h2>Elasticine Admin</h2>
+		
+		<form method="post" action="options-general.php?page=elasticine-admin">
+			<?php wp_nonce_field('elasticine-admin');
+			?>
+
+			<input type="hidden" value="true" name="forceUpdate" />
+			<p>
+				<input type="submit" value="<?php _e('Force update') ?>" />
+			</p>
+			
 		</form>
 		</div>
 <?php
