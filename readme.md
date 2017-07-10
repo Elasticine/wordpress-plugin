@@ -86,6 +86,145 @@ var_dump($shows);
 
 Copy the elasticine-artists.php into wp-content/plugins, and activate through Wordpress as with any other plugin. In the settings page, enter your company name as it appears in the "name" field of your company settings in Elasticine. 
 
+## API Reference
+
+The Elasticine main system is located at system.elasticine.net. The JSON API is located at system.elasticine.net/api/json/{company-url-slug}/{endpoint} -- currently only JSON is supported. To get a URL slug for a company using the Elasticine platform please contact us. 
+
+*Usage*: There are currently no rate limits but we do monitor access. We recommend including a caching layer on your website implementation since the information on this API will change relatively infrequently. We recommend re-querying not more frequently than every 6 hours. 
+
+The Elasticine API has 4 endpoints: artists list, artist info, shows list, artist specific shows. 
+
+### Artists list
+
+system.elasticine.net/api/json/{company-url-slug}/artists/ 
+
+Returns an array of artists, with a summary of important info, on a company's public roster. 
+
+```javascript
+[
+	{
+		"name":"Artist name",
+		"profilePic":"URL to artist profile picture",
+		"featuredAssets": //Array of featured artist assets 
+			[
+				{
+					"title":"Asset title",
+					"isImage":"1",
+					"url":"URL to artist asset",
+					"thumb":"If asset is image, URL to thumbnail resize of asset"
+				}
+			],
+		"doesDJ":"1", //Artists on Elasticine can be listed as performing DJ sets, performing live, or both
+		"doesLive":"0",
+		"agents":	//Array of agents that represent the artist
+			[
+				{
+					"name":"Agent name",
+					"email":"Agent email",
+					"territories": //Array of territory labels that the agent deals with, if company uses territory features (in which an artist may have one agent for one territory, and another for a different one
+							["Worldwide", "Australia"]
+				}
+			],
+		"slug":"artist-slug", //Artist slug to access artist specific API endpoints
+		"territories":["Worldwide", "Australia"] //Territories that the artist plays in
+	},
+]
+```
+
+### Artist specific information
+
+system.elasticine.net/api/json/{company-url-slug}/artist/{artist-url-slug} 
+
+Returns a detailed JSON representation of an artist's public profile. 
+
+```javascript
+{
+	"name":"Artist name",
+	"slug":"artist-slug",
+	"website":"URL to artist website",
+	"profilePic":"URL to artist profile picture",
+	"soundcloud":"URL to artist soundcloud",
+	"facebook":"URL to artist facebook",
+	"twitter":"URL to artist twitter",
+	"instagram":"URL to artist instagram",
+	"youtube":"URL to artist youtube",
+	"agents": //Array of agents representing artist, same as artists/ endpoint but also including array of any assistants assigned to artist
+		[
+			{
+				"name":"Agent name",
+				"email":"Agent email",
+				"assistants":[{"name":"Assistant name","email":"Assistant email"}],
+				"territories":[]
+			}
+		],
+	"tagline":"Artist tagline",
+	"biography":"Artist biography with HTML formatting",
+	"info":"Additional artist information with HTML formatting",
+	"links":[],
+	"featuredLinks":[],
+	"pressAssets":[],
+	"featuredAssets":[],
+	"labels":[], //Array of strings, name of labels that artist has released on
+	"territories":[] //Array of strings, name of territories that artist plays in
+}
+```
+
+Platform users have the option of adding any number of links (to web properties) and assets (files, including images) to an artist's public profile. These can be marked featured or not, allowing the user to potentially control (for example) display logic on the agency website, highlighting certain links and assets. 
+
+The format of a link in the links & featuredLinks arrays is:
+
+```javascript
+{
+	"text":"Link text to display",
+	"url":"Link URL",
+	"type":"Link type -- Web, Soundcloud, Youtube, Facebook"
+}
+```
+
+The format of an asset in the assets and featuredAssets arrays is:
+
+```javascript
+{
+	"title":"Asset title",
+	"isImage":"1", //Or 0 if not an image...
+	"url":"URL to artist asset",
+	"thumb":"If asset is image, URL to thumbnail resize of asset"
+}
+```
+
+### Shows
+
+system.elasticine.net/api/json/{company-url-slug}/shows/{startDate}/{endDate}
+
+Returns an array of announced, confirmed shows for artists on the company roster between startDate and endDate, formatted as dd-mm-yyyy. 
+
+```javascript
+[
+	{	
+		"date":"01-Jan-17",
+		"agents":[], //Array of agents, same format as in artists endpoint
+		"announced":"23-Mar-16", //Date show was announced
+		"artist":"Name of artist",
+		"billedAs":"Show-specific billing name of artist",
+		"event":"Event name for show",
+		"facebookLink":"URL for show facebook page",
+		"ticketLink":"URL for show ticket purchase page",
+		"venue":"Name of venue",
+		"city":"Show location city",
+		"country":"Show location country as ISO code (e.g. 'GB')",
+		"territories":[] //Same as artists & agents, a show can be for a specific territory or territories 
+	}
+```
+
+### Artist specific shows
+
+system.elasticine.net/api/json/{company-url-slug}/artist_shows/{startDate}/{endDate}/{artistSlug}
+
+Returns an array of announced, confirmed shows for artists on the company roster between startDate and endDate, formatted as dd-mm-yyyy, for the artist specified
+in artistSlug. 
+
+Each show has the same format as in the shows/ endpoint. 
+
 ## Contributors
 
 Please email henry@elasticine.net if you find any bugs or have any feature requests. 
