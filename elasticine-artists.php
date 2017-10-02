@@ -191,7 +191,7 @@ function elasticine_build_url()
  */
 function elasticine_filter_territories($data)
 {
-	$territories = get_option('elasticine_artists_territory');
+	$territories = trim(get_option('elasticine_artists_territory'));
 
 	if (trim($territories) == "")
 	{
@@ -212,7 +212,7 @@ function elasticine_filter_territories($data)
 
 					foreach($dataItem->territories as $t)
 					{
-						if (strpos($t, $territories) !== false)
+						if (strpos(trim($t), $territories) !== false)
 						{
 							$dataToReturn[] = $dataItem; 
 						}
@@ -238,7 +238,7 @@ function elasticine_filter_agents($item, $territories)
 				$includeAgent = false;
 				foreach($agent->territories as $t)
 				{				
-					if (strpos($t, $territories) !== false)
+					if (strpos(trim($t), $territories) !== false)
 					{
 						$includeAgent = true;
 					}
