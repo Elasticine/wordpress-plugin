@@ -254,6 +254,9 @@ function elasticine_filter_agents($item, $websiteTerritory)
 			});
 	}
 
+	//Sometimes $item->agents is an object? Todo find out why but in the meantime this works to patch. 
+	if (!is_array($item->agents)) { $item->agents = (array) $item->agents; }
+
 	return $item;
 }
 
