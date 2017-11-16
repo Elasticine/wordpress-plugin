@@ -213,21 +213,21 @@ function elasticine_filter_territories($data)
 		elastilog("elasticine_filter_territories no territories set for website, returning");
 		return $data; 
 	} else {
-		$dataToReturn = [];
+		$dataToReturn = $data;
 
-		//Filter at top level for artist single page (step 1)
-		$dataToReturn = elasticine_filter_agents($data, $websiteTerritory);
+		//Filter at top level for artist single page (step 1)                
+		if (!is_array($data)) { $dataToReturn = elasticine_filter_agents($data, $websiteTerritory); }
 
 		if (is_array($dataToReturn))
 		{
 			//Step 2
-			$dataToReturn = array_filter($dataToReturn, function($item) use ($websiteTerritory) {
+			$dataToReturn = array_values(array_filter($dataToReturn, function($item) use ($websiteTerritory) {
 
 				$territories = array_map(function($t) { return strtolower(trim($t)); }, $item->territories);
 				$include = in_array($websiteTerritory, $territories); 
 				return $include;
 
-			});
+			}));
 
 			//Step 3
 			$dataToReturn = array_map(function($dataItem) use ($websiteTerritory) { return elasticine_filter_agents($dataItem, $websiteTerritory); }, $dataToReturn);
@@ -245,17 +245,14 @@ function elasticine_filter_agents($item, $websiteTerritory)
 
 	if (isset($item->agents) && count($item->agents) > 0)
 	{
-		$item->agents =  array_filter($item->agents, function($agent) use ($websiteTerritory) {
+		$item->agents =  array_values(array_filter($item->agents, function($agent) use ($websiteTerritory) {
 
 				$territories = array_map(function($t) { return strtolower(trim($t)); }, $agent->territories);
 				$include = in_array($websiteTerritory, $territories); 
 				return $include;
 
-			});
+			}));
 	}
-
-	//Sometimes $item->agents is an object? Todo find out why but in the meantime this works to patch. 
-	if (!is_array($item->agents)) { $item->agents = (array) $item->agents; }
 
 	return $item;
 }
